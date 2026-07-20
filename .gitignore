@@ -9,3 +9,4 @@ instance/
 *.swo
 .DS_Store
 Thumbs.db
+static/faces/
