@@ -3,24 +3,24 @@
 {% block content %}
 <div class="page-header"><div><h1>All Attendance Records</h1><p>View attendance across all faculty and classes</p></div></div>
 <div class="table-container">
-    <div style="padding:16px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-        <div style="flex:1;min-width:150px"><label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px"><i data-lucide="calendar" style="width:12px;height:12px"></i> Date</label>
-            <input type="date" name="date" value="{{ selected_date.isoformat() }}" form="filter-form" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit;background:var(--bg-input);color:var(--text)">
+    <div class="filter-bar">
+        <div class="filter-item"><label><i data-lucide="calendar" style="width:12px;height:12px"></i> Date</label>
+            <input type="date" name="date" value="{{ selected_date.isoformat() }}" form="filter-form">
         </div>
-        <div style="flex:1;min-width:150px"><label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px"><i data-lucide="users" style="width:12px;height:12px"></i> Faculty</label>
-            <select name="faculty_id" form="filter-form" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit;background:var(--bg-input);color:var(--text)">
+        <div class="filter-item"><label><i data-lucide="users" style="width:12px;height:12px"></i> Faculty</label>
+            <select name="faculty_id" form="filter-form">
                 <option value="">All Faculty</option>
                 {% for f in all_faculty %}<option value="{{ f.id }}" {% if faculty_filter == f.id|string %}selected{% endif %}>{{ f.name }}</option>{% endfor %}
             </select>
         </div>
-        <div style="flex:1;min-width:150px"><label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px"><i data-lucide="book-open" style="width:12px;height:12px"></i> Class</label>
-            <select name="class_id" form="filter-form" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit;background:var(--bg-input);color:var(--text)">
+        <div class="filter-item"><label><i data-lucide="book-open" style="width:12px;height:12px"></i> Class</label>
+            <select name="class_id" form="filter-form">
                 <option value="">All Classes</option>
                 {% for c in all_classes %}<option value="{{ c.id }}" {% if class_filter == c.id|string %}selected{% endif %}>{{ c.name }}{% if c.division %} - {{ c.division }}{% endif %}</option>{% endfor %}
             </select>
         </div>
-        <form id="filter-form" method="GET" action="{{ url_for('admin_attendance') }}" style="display:flex;gap:6px">
-            <button type="submit" class="btn" style="height:36px"><i data-lucide="search" style="width:14px;height:14px"></i> Filter</button>
+        <form id="filter-form" method="GET" action="{{ url_for('admin_attendance') }}" class="filter-btn">
+            <button type="submit" class="btn btn-sm"><i data-lucide="search" style="width:14px;height:14px"></i> Filter</button>
         </form>
     </div>
     <div class="table-responsive">

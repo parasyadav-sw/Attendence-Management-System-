@@ -22,7 +22,7 @@
             <i data-lucide="info" style="width:14px;height:14px;vertical-align:middle;color:var(--accent)"></i>
             Class: <strong id="class-info-text">{{ student.class_name }}{% if student.division %} - {{ student.division }}{% endif %}</strong>
         </div>
-        <div style="display:flex;gap:10px;margin-top:8px">
+        <div class="form-grid-2" style="margin-top:8px">
             <a href="{{ url_for('students') }}" class="btn btn-secondary" style="flex:1"><i data-lucide="x" style="width:16px;height:16px"></i> Cancel</a>
             <button type="submit" class="btn btn-success" style="flex:1"><i data-lucide="save" style="width:16px;height:16px"></i> Save Changes</button>
         </div>

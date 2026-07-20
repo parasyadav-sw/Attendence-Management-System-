@@ -6,9 +6,9 @@
     <a href="{{ url_for('register_student') }}" class="btn"><i data-lucide="user-plus" style="width:16px;height:16px"></i> Add Student</a>
 </div>
 <div class="table-container">
-    <div style="padding:16px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <div style="flex:1;min-width:200px"><label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px"><i data-lucide="filter" style="width:12px;height:12px"></i> Filter by Class</label>
-            <select onchange="window.location.href='{{ url_for('students') }}?class_id='+this.value" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit;background:var(--bg-input);color:var(--text)">
+    <div class="filter-bar">
+        <div class="filter-item"><label><i data-lucide="filter" style="width:12px;height:12px"></i> Filter by Class</label>
+            <select onchange="window.location.href='{{ url_for('students') }}?class_id='+this.value">
                 <option value="">All Classes</option>
                 {% for c in classes %}<option value="{{ c.id }}" {% if selected_class_id == c.id|string %}selected{% endif %}>{{ c.name }}{% if c.division %} - {{ c.division }}{% endif %}</option>{% endfor %}
             </select>
