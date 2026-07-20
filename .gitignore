@@ -10,3 +10,4 @@ instance/
 .DS_Store
 Thumbs.db
 static/faces/
+.tmp.driveupload/
