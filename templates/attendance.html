@@ -1,0 +1,547 @@
+{% extends "base.html" %}
+{% block title %}Take Attendance - ParaScan{% endblock %}
+{% block content %}
+
+<style>
+    .att-video-wrap{position:relative;background:#000;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-lg)}
+    .att-video-wrap video{width:100%;display:block;min-height:420px;object-fit:cover;transform:scaleX(-1)}
+    .att-guide-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+    .att-status-bar{position:absolute;bottom:0;left:0;right:0;padding:14px 20px;text-align:center;backdrop-filter:blur(12px);transition:all .3s ease}
+    .att-status-bar.idle{background:rgba(15,23,42,.6);color:rgba(255,255,255,.7)}
+    .att-status-bar.detecting{background:rgba(79,70,229,.85);color:#fff}
+    .att-status-bar.recognizing{background:rgba(139,92,246,.85);color:#fff}
+    .att-status-bar.success{background:rgba(16,185,129,.85);color:#fff}
+    .att-status-bar.error{background:rgba(239,68,68,.85);color:#fff}
+    .att-status-bar.info{background:rgba(59,130,246,.85);color:#fff}
+    .att-status-bar .status-inner{display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:600}
+    .att-status-bar .status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .att-status-bar.idle .status-dot{background:rgba(255,255,255,.4)}
+    .att-status-bar.detecting .status-dot,.att-status-bar.recognizing .status-dot{background:#fff;animation:pulse-dot 1s infinite}
+    .att-status-bar.success .status-dot{background:#fff}
+    .att-status-bar.error .status-dot{background:#fff}
+    @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+    .att-controls{padding:16px;display:flex;align-items:center;justify-content:center;gap:12px;background:var(--bg-card);border-top:1px solid var(--border)}
+    .att-sidebar{display:flex;flex-direction:column;gap:16px}
+    .att-sidebar-card{background:var(--bg-card);padding:20px;border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow-sm)}
+    .att-sidebar-card h3{font-size:14px;font-weight:700;margin:0 0 14px;display:flex;align-items:center;gap:8px;color:var(--text)}
+    .att-count-display{text-align:center;padding:20px 16px}
+    .att-count-number{font-size:48px;font-weight:800;color:var(--accent);line-height:1}
+    .att-count-label{font-size:12px;color:var(--text-secondary);font-weight:600;margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+    .att-student-list{list-style:none;max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+    .att-student-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:var(--radius);transition:background .3s}
+    .att-student-item:hover{background:var(--bg-secondary)}
+    .att-student-item.new-entry{animation:markFlash .6s ease}
+    @keyframes markFlash{0%{background:rgba(16,185,129,.15)}100%{background:transparent}}
+    .att-student-name{font-size:13px;font-weight:600;color:var(--text)}
+    .att-student-id{font-size:11px;color:var(--text-muted)}
+    .att-student-time{font-size:11px;color:var(--text-muted);text-align:right}
+    .att-debug-toggle{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:0;margin:0;border:none;background:none;width:100%;color:var(--text);font-family:inherit}
+    .att-debug-toggle:hover{color:var(--accent)}
+    .att-debug-content{font-size:11px;font-family:'SF Mono',Consolas,monospace;color:var(--text-secondary);background:var(--bg-secondary);border-radius:var(--radius);padding:12px;margin-top:10px;max-height:200px;overflow-y:auto;line-height:1.8;display:none}
+    .att-debug-content.open{display:block}
+    .att-debug-content .log-line{border-bottom:1px solid var(--border-light);padding:2px 0}
+    .att-debug-content .log-key{color:var(--text-muted)}
+    .att-debug-content .log-val{color:var(--accent);font-weight:600}
+    .att-debug-content .log-val.green{color:var(--green)}
+    .att-debug-content .log-val.red{color:var(--red)}
+    .att-empty{text-align:center;padding:24px 16px;color:var(--text-muted);font-size:13px}
+    .att-progress{display:flex;gap:3px;justify-content:center;margin-top:6px}
+    .att-progress-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.3);transition:background .2s}
+    .att-progress-dot.active{background:#fff}
+    .att-progress-dot.done{background:rgba(255,255,255,.8)}
+</style>
+
+<div id="class-selection">
+    <div class="page-header">
+        <div><h1>Take Attendance</h1><p>Select a class to start face recognition attendance</p></div>
+    </div>
+    <div class="form-container" style="max-width:480px">
+        <h2><i data-lucide="book-open" style="width:18px;height:18px"></i> Select Class</h2>
+        <div class="form-group">
+            <label><i data-lucide="graduation-cap" style="width:14px;height:14px"></i> Class *</label>
+            <select id="att-class-select" required>
+                <option value="">-- Choose a Class --</option>
+                {% for c in classes %}<option value="{{ c.id }}" data-name="{{ c.name }}{% if c.division %} - {{ c.division }}{% endif %}">{{ c.name }}{% if c.division %} - {{ c.division }}{% endif %}{% if c.department %} ({{ c.department }}){% endif %}</option>{% endfor %}
+            </select>
+        </div>
+        <button class="btn btn-block" onclick="startSession()">
+            <i data-lucide="camera" style="width:16px;height:16px"></i> Start Attendance
+        </button>
+        {% if not classes %}
+        <div style="text-align:center;margin-top:16px;padding:16px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px">
+            <i data-lucide="info" style="width:14px;height:14px;color:var(--accent);vertical-align:middle"></i>
+            No classes found. <a href="{{ url_for('class_add') }}" style="color:var(--accent);font-weight:600">Create a class first</a>.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div id="attendance-session" style="display:none">
+    <div class="page-header">
+        <div>
+            <h1>Attendance: <span id="selected-class-name"></span></h1>
+            <p>Position your face inside the oval guide. Attendance marks automatically.</p>
+        </div>
+        <div id="session-counter" style="background:var(--bg-card);padding:10px 18px;border-radius:var(--radius);border:1px solid var(--border);text-align:center;box-shadow:var(--shadow-xs)">
+            <span style="font-size:26px;font-weight:700;color:var(--accent)" id="marked-count">0</span>
+            <span style="display:block;font-size:11px;color:var(--text-secondary);font-weight:500">Marked</span>
+        </div>
+    </div>
+
+    <div class="attendance-container">
+        <div class="att-video-wrap">
+            <video id="camera-video" autoplay playsinline muted></video>
+            <canvas id="guide-canvas" class="att-guide-canvas"></canvas>
+            <canvas id="capture-canvas" style="display:none"></canvas>
+            <div id="att-status" class="att-status-bar idle">
+                <div class="status-inner">
+                    <span class="status-dot"></span>
+                    <span id="att-status-text">Initializing camera...</span>
+                </div>
+                <div id="att-progress" class="att-progress" style="display:none"></div>
+            </div>
+        </div>
+        <div class="att-controls">
+            <button id="btn-stop" class="btn btn-danger" onclick="stopSession()">
+                <i data-lucide="square" style="width:16px;height:16px"></i> Stop Attendance
+            </button>
+        </div>
+
+        <div class="att-sidebar">
+            <div class="att-sidebar-card att-count-display">
+                <div class="att-count-number" id="live-count">0</div>
+                <div class="att-count-label">Students Marked Today</div>
+            </div>
+
+            <div class="att-sidebar-card" style="flex:1;display:flex;flex-direction:column">
+                <h3><i data-lucide="users" style="width:16px;height:16px"></i> Live Attendance</h3>
+                <ul id="attendance-list" class="att-student-list">
+                    <li class="att-empty">No attendance marked yet</li>
+                </ul>
+            </div>
+
+            <div class="att-sidebar-card">
+                <button class="att-debug-toggle" onclick="toggleDebug()">
+                    <h3 style="margin:0"><i data-lucide="bug" style="width:14px;height:14px"></i> Debug Info</h3>
+                    <i data-lucide="chevron-down" style="width:14px;height:14px;transition:transform .2s" id="debug-chevron"></i>
+                </button>
+                <div id="debug-panel" class="att-debug-content"></div>
+                <div style="margin-top:12px">
+                    <a href="{{ url_for('attendance_records') }}" class="btn btn-secondary btn-block btn-sm">
+                        <i data-lucide="clipboard-list" style="width:14px;height:14px"></i> View Records
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function(){
+    var CAPTURE_FRAMES=8, CAPTURE_INTERVAL_MS=150, SCAN_PAUSE_MS=2500, COOLDOWN_MS=5000;
+    var stream=null, active=false, scanning=false, classId=null, className='';
+    var markedCount=0, markedIds={}, batchNum=0, debugOpen=false;
+    var debugLog=[];
+
+    function log(tag,msg){console.log('[ParaScan]['+tag+'] '+msg);debugLog.push({tag:tag,msg:msg,time:new Date().toLocaleTimeString()});if(debugOpen)renderDebug()}
+    function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+
+    function setStatus(text,type){
+        var bar=document.getElementById('att-status');
+        var txt=document.getElementById('att-status-text');
+        bar.className='att-status-bar '+type;
+        txt.textContent=text;
+        if(typeof lucide!=='undefined')lucide.createIcons();
+    }
+
+    function showProgress(show,current,total){
+        var el=document.getElementById('att-progress');
+        if(!show){el.style.display='none';return}
+        el.style.display='flex';
+        var html='';
+        for(var i=0;i<total;i++){
+            var cls=i<current?'done':i===current?'active':'';
+            html+='<div class="att-progress-dot '+cls+'"></div>';
+        }
+        el.innerHTML=html;
+    }
+
+    function drawGuide(faceDetected){
+        var canvas=document.getElementById('guide-canvas');
+        var video=document.getElementById('camera-video');
+        if(!canvas||!video||!video.videoWidth)return;
+        canvas.width=video.videoWidth;
+        canvas.height=video.videoHeight;
+        var ctx=canvas.getContext('2d');
+        var w=canvas.width, h=canvas.height;
+        ctx.clearRect(0,0,w,h);
+        ctx.fillStyle='rgba(0,0,0,0.4)';
+        ctx.fillRect(0,0,w,h);
+        var cx=w/2, cy=h/2-10;
+        var rx=Math.min(w*0.22,130), ry=Math.min(h*0.30,170);
+        ctx.globalCompositeOperation='destination-out';
+        ctx.beginPath();
+        ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
+        ctx.fill();
+        ctx.globalCompositeOperation='source-over';
+        var borderColor=faceDetected?'#10B981':'rgba(255,255,255,0.55)';
+        ctx.strokeStyle=borderColor;
+        ctx.lineWidth=2.5;
+        ctx.beginPath();
+        ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
+        ctx.stroke();
+        var mLen=18, mOff=0.72;
+        ctx.strokeStyle=borderColor;
+        ctx.lineWidth=3;
+        [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(function(d){
+            var px=cx+d[0]*rx*mOff, py=cy+d[1]*ry*mOff;
+            ctx.beginPath();
+            ctx.moveTo(px+d[0]*(-mLen),py);
+            ctx.lineTo(px,py);
+            ctx.lineTo(px,py+d[1]*(-mLen));
+            ctx.stroke();
+        });
+        ctx.fillStyle=faceDetected?'rgba(16,185,129,0.9)':'rgba(255,255,255,0.6)';
+        ctx.font='600 14px Inter,sans-serif';
+        ctx.textAlign='center';
+        ctx.fillText(faceDetected?'Face Detected':'Position your face in the oval',cx,cy+ry+32);
+    }
+
+    function drawBoxes(faces){
+        var canvas=document.getElementById('guide-canvas');
+        var video=document.getElementById('camera-video');
+        if(!canvas||!video||!video.videoWidth)return;
+        canvas.width=video.videoWidth;
+        canvas.height=video.videoHeight;
+        var ctx=canvas.getContext('2d');
+        var w=canvas.width, h=canvas.height;
+        ctx.clearRect(0,0,w,h);
+        ctx.fillStyle='rgba(0,0,0,0.4)';
+        ctx.fillRect(0,0,w,h);
+        var cx=w/2, cy=h/2-10;
+        var rx=Math.min(w*0.22,130), ry=Math.min(h*0.30,170);
+        ctx.globalCompositeOperation='destination-out';
+        ctx.beginPath();
+        ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
+        ctx.fill();
+        ctx.globalCompositeOperation='source-over';
+        var borderColor='#10B981';
+        ctx.strokeStyle=borderColor;
+        ctx.lineWidth=2.5;
+        ctx.beginPath();
+        ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
+        ctx.stroke();
+        var mLen=18, mOff=0.72;
+        ctx.lineWidth=3;
+        [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(function(d){
+            var px=cx+d[0]*rx*mOff, py=cy+d[1]*ry*mOff;
+            ctx.beginPath();
+            ctx.moveTo(px+d[0]*(-mLen),py);
+            ctx.lineTo(px,py);
+            ctx.lineTo(px,py+d[1]*(-mLen));
+            ctx.stroke();
+        });
+        ctx.fillStyle='rgba(16,185,129,0.9)';
+        ctx.font='600 14px Inter,sans-serif';
+        ctx.textAlign='center';
+        ctx.fillText('Face Detected',cx,cy+ry+32);
+        if(faces&&faces.length>0){
+            var scaleX=w/parseFloat(document.getElementById('capture-canvas').width);
+            var scaleY=h/parseFloat(document.getElementById('capture-canvas').height);
+            faces.forEach(function(box){
+                var bx=box.x*scaleX, by=box.y*scaleY, bw=box.w*scaleX, bh=box.h*scaleY;
+                ctx.strokeStyle='#10B981';
+                ctx.lineWidth=3;
+                ctx.strokeRect(bx,by,bw,bh);
+                ctx.fillStyle='rgba(16,185,129,0.12)';
+                ctx.fillRect(bx,by,bw,bh);
+            });
+        }
+    }
+
+    function notify(msg,type){
+        var old=document.querySelector('.att-notification');if(old)old.remove();
+        var n=document.createElement('div');
+        n.className='att-notification';
+        n.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:var(--radius);font-weight:600;font-size:13px;z-index:9999;animation:fadeIn .3s ease;box-shadow:var(--shadow-lg)';
+        var icons={success:'check-circle',info:'info',error:'alert-circle'};
+        var colors={success:{bg:'rgba(16,185,129,.15)',c:'var(--green)'},info:{bg:'rgba(79,70,229,.1)',c:'var(--accent)'},error:{bg:'rgba(239,68,68,.15)',c:'var(--red)'}};
+        var s=colors[type]||colors.error;
+        n.style.background=s.bg;n.style.color=s.c;
+        n.innerHTML='<i data-lucide="'+(icons[type]||'alert-circle')+'" style="width:16px;height:16px;margin-right:6px;vertical-align:middle"></i>'+msg;
+        document.body.appendChild(n);
+        if(typeof lucide!=='undefined')lucide.createIcons();
+        setTimeout(function(){n.style.opacity='0';n.style.transition='opacity .3s';setTimeout(function(){n.remove()},300)},2500);
+    }
+
+    function beep(){
+        try{
+            var ac=new(window.AudioContext||window.webkitAudioContext)();
+            var o=ac.createOscillator(),g=ac.createGain();
+            o.connect(g);g.connect(ac.destination);
+            o.frequency.value=800;o.type='sine';g.gain.value=0.1;
+            o.start();g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.15);
+            o.stop(ac.currentTime+0.15);
+        }catch(e){}
+    }
+
+    function addToList(name,sid,time){
+        var list=document.getElementById('attendance-list');
+        var empty=list.querySelector('.att-empty');
+        if(empty)empty.remove();
+        var li=document.createElement('li');
+        li.className='att-student-item new-entry';
+        li.innerHTML='<div><div class="att-student-name">'+name+'</div><div class="att-student-id">'+(sid||'')+'</div></div><div class="att-student-time"><span class="badge badge-success">Present</span><br>'+time+'</div>';
+        list.insertBefore(li,list.firstChild);
+    }
+
+    function toggleDebug(){
+        debugOpen=!debugOpen;
+        var panel=document.getElementById('debug-panel');
+        var chevron=document.getElementById('debug-chevron');
+        panel.className='att-debug-content'+(debugOpen?' open':'');
+        chevron.style.transform=debugOpen?'rotate(180deg)':'';
+        if(debugOpen)renderDebug();
+    }
+
+    function renderDebug(){
+        var panel=document.getElementById('debug-panel');
+        var html='';
+        var last=debugLog.slice(-20);
+        last.forEach(function(l){
+            html+='<div class="log-line"><span class="log-key">['+l.time+']['+l.tag+']</span> '+l.msg+'</div>';
+        });
+        panel.innerHTML=html;
+        panel.scrollTop=panel.scrollHeight;
+    }
+
+    function loadExisting(){
+        var today=new Date().toISOString().split('T')[0];
+        fetch('/get-attendance-data?date='+today+'&classroom_id='+classId)
+        .then(function(r){return r.json()})
+        .then(function(d){
+            log('LOAD','Found '+d.length+' existing record(s)');
+            var list=document.getElementById('attendance-list');
+            list.innerHTML='';
+            if(d.length===0){
+                list.innerHTML='<li class="att-empty">No attendance marked yet</li>';
+                markedCount=0;
+            }else{
+                markedCount=d.length;
+                d.forEach(function(r){
+                    markedIds[r.student_id]=true;
+                    addToList(r.name,r.student_id,r.time);
+                });
+            }
+            document.getElementById('marked-count').textContent=markedCount;
+            document.getElementById('live-count').textContent=markedCount;
+        }).catch(function(e){log('LOAD','Error: '+e.message)});
+    }
+
+    window.startSession=function(){
+        var sel=document.getElementById('att-class-select');
+        if(!sel.value){alert('Please select a class.');return}
+        classId=sel.value;
+        className=sel.options[sel.selectedIndex].getAttribute('data-name');
+        document.getElementById('selected-class-name').textContent=className;
+        document.getElementById('class-selection').style.display='none';
+        document.getElementById('attendance-session').style.display='block';
+        document.getElementById('session-counter').style.display='block';
+        document.getElementById('marked-count').textContent='0';
+        document.getElementById('live-count').textContent='0';
+        markedCount=0;markedIds={};batchNum=0;debugLog=[];
+        log('INIT','Session started for class: '+className+' (id='+classId+')');
+        openCamera();
+    };
+
+    function openCamera(){
+        var video=document.getElementById('camera-video');
+        setStatus('Requesting camera access...','idle');
+        log('CAMERA','Requesting getUserMedia');
+        if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+            setStatus('Camera not supported in this browser','error');
+            log('CAMERA','getUserMedia not available');
+            return;
+        }
+        navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}}})
+        .then(function(s){
+            stream=s;
+            video.srcObject=s;
+            log('CAMERA','Stream acquired');
+            var started=false;
+            function onReady(){
+                if(started)return;
+                started=true;
+                log('CAMERA','Video ready: '+video.videoWidth+'x'+video.videoHeight);
+                drawGuide(false);
+                setStatus('Ready - scanning for faces','info');
+                active=true;
+                loadExisting();
+                runScanCycle();
+            }
+            video.onloadedmetadata=function(){
+                video.play().then(onReady).catch(function(e){
+                    log('CAMERA','play() failed: '+e.message);
+                    setStatus('Camera play error','error');
+                });
+            };
+            video.onplaying=function(){onReady()};
+            var poll=0;
+            var timer=setInterval(function(){
+                poll++;
+                if(started||poll>40){clearInterval(timer);return}
+                if(poll%5===0)log('CAMERA','Poll #'+poll+': readyState='+video.readyState);
+                if(video.readyState>=2&&video.videoWidth>0){
+                    clearInterval(timer);
+                    video.play().then(onReady).catch(onReady);
+                }
+            },500);
+        })
+        .catch(function(e){
+            log('CAMERA','getUserMedia failed: '+e.message);
+            setStatus('Camera access denied','error');
+            notify('Camera access denied. Please allow camera permissions.','error');
+        });
+    }
+
+    async function runScanCycle(){
+        if(!active)return;
+        while(active){
+            scanning=true;
+            batchNum++;
+            log('SCAN','--- Batch #'+batchNum+' start ---');
+            var frames=await captureFrames();
+            if(!active||frames.length===0){scanning=false;break}
+            setStatus('Recognizing...','recognizing');
+            showProgress(false);
+            var result=await sendBatch(frames);
+            if(result)handleResult(result);
+            scanning=false;
+            if(active){
+                log('SCAN','Pausing '+SCAN_PAUSE_MS+'ms before next scan');
+                await sleep(SCAN_PAUSE_MS);
+            }
+        }
+    }
+
+    async function captureFrames(){
+        var video=document.getElementById('camera-video');
+        var canvas=document.getElementById('capture-canvas');
+        var ctx=canvas.getContext('2d');
+        if(video.readyState<2||!video.videoWidth){
+            log('CAPTURE','Video not ready, readyState='+video.readyState);
+            return[];
+        }
+        canvas.width=video.videoWidth;
+        canvas.height=video.videoHeight;
+        var frames=[];
+        for(var i=0;i<CAPTURE_FRAMES;i++){
+            if(!active)break;
+            ctx.drawImage(video,0,0,canvas.width,canvas.height);
+            frames.push(canvas.toDataURL('image/jpeg',0.7));
+            setStatus('Detecting face... ('+(i+1)+'/'+CAPTURE_FRAMES+')','detecting');
+            showProgress(true,i+1,CAPTURE_FRAMES);
+            log('CAPTURE','Frame '+(i+1)+'/'+CAPTURE_FRAMES+' captured');
+            if(i<CAPTURE_FRAMES-1)await sleep(CAPTURE_INTERVAL_MS);
+        }
+        log('CAPTURE','Batch complete: '+frames.length+' frames');
+        return frames;
+    }
+
+    async function sendBatch(frames){
+        try{
+            var canvas=document.getElementById('capture-canvas');
+            var resp=await fetch('/detect-face-batch',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({
+                    images:frames,
+                    classroom_id:classId,
+                    clientWidth:canvas.width,
+                    clientHeight:canvas.height
+                })
+            });
+            if(!resp.ok)throw new Error('Server HTTP '+resp.status);
+            var data=await resp.json();
+            if(data.error){
+                log('API','Error: '+data.error);
+                notify('Server error: '+data.error,'error');
+                setStatus('Server error','error');
+                return null;
+            }
+            if(data.debug){
+                log('API','frames='+data.debug.framesReceived+' faces='+data.debug.facesFound+' bestScore='+(data.debug.bestScore||'?')+' reason='+(data.debug.reason||'?'));
+                if(data.debug.scores){
+                    var keys=Object.keys(data.debug.scores);
+                    keys.forEach(function(k){log('API','  '+k+' = '+data.debug.scores[k])});
+                }
+            }
+            return data;
+        }catch(e){
+            log('API','Fetch failed: '+e.message);
+            notify('Connection error: '+e.message,'error');
+            setStatus('Connection error','error');
+            return null;
+        }
+    }
+
+    function handleResult(data){
+        if(data.faces&&data.faces.length>0){
+            drawBoxes(data.faces);
+        }else{
+            drawGuide(false);
+        }
+        if(data.success&&data.student_name){
+            if(data.marked){
+                if(!markedIds[data.student_id]){
+                    markedCount++;
+                    markedIds[data.student_id]=true;
+                }
+                document.getElementById('marked-count').textContent=markedCount;
+                document.getElementById('live-count').textContent=markedCount;
+                setStatus('Attendance Marked: '+data.student_name,'success');
+                notify('Marked: '+data.student_name+' (score: '+data.score+')','success');
+                beep();
+                addToList(data.student_name,data.student_id,data.time||new Date().toLocaleTimeString());
+                log('RESULT','MARKED: '+data.student_name+' id='+data.student_id+' score='+data.score);
+            }else{
+                setStatus(data.student_name+' - already marked today','info');
+                notify(data.student_name+' already marked today','info');
+                log('RESULT','DUPLICATE: '+data.student_name);
+            }
+        }else if(data.message==='No face detected'){
+            setStatus('No face detected - look at the camera','error');
+            log('RESULT','No face detected');
+        }else if(data.message==='Student not registered'){
+            var sc=data.score||0;
+            setStatus('Face not recognized (score: '+sc+')','error');
+            log('RESULT','Not recognized: score='+sc);
+        }else if(data.message==='No registered students'){
+            setStatus('No registered students in this class','error');
+            notify('No registered students in this class','error');
+            log('RESULT','No registered students');
+        }else{
+            setStatus(data.message||'Unknown status','info');
+            log('RESULT','Other: '+data.message);
+        }
+    }
+
+    window.stopSession=function(){
+        log('STOP','Session ending');
+        active=false;scanning=false;
+        if(stream){stream.getTracks().forEach(function(t){t.stop()});stream=null}
+        document.getElementById('camera-video').srcObject=null;
+        var gc=document.getElementById('guide-canvas');
+        if(gc){var ctx=gc.getContext('2d');ctx.clearRect(0,0,gc.width,gc.height)}
+        showProgress(false);
+        document.getElementById('attendance-status')&&(document.getElementById('attendance-status').className='detection-status');
+        document.getElementById('session-counter').style.display='none';
+        document.getElementById('class-selection').style.display='block';
+        document.getElementById('attendance-session').style.display='none';
+        notify('Session ended. '+markedCount+' student(s) marked.','info');
+    };
+
+    log('INIT','Attendance module loaded');
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Edit Class - ParaScan{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div><h1>Edit Class</h1><p>Update class information</p></div>
+    <a href="{{ url_for('class_list') }}" class="btn btn-secondary"><i data-lucide="arrow-left" style="width:16px;height:16px"></i> Back</a>
+</div>
+<div class="form-container" style="max-width:560px">
+    <h2><i data-lucide="book-open" style="width:18px;height:18px"></i> Edit: {{ classroom.name }}</h2>
+    <form method="POST" action="{{ url_for('class_edit', class_id=classroom.id) }}">
+        <div class="form-group"><label><i data-lucide="tag" style="width:14px;height:14px"></i> Class Name *</label><input type="text" name="name" required value="{{ classroom.name }}"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div class="form-group"><label><i data-lucide="layers" style="width:14px;height:14px"></i> Division</label><input type="text" name="division" value="{{ classroom.division or '' }}"></div>
+            <div class="form-group"><label><i data-lucide="building-2" style="width:14px;height:14px"></i> Department</label><input type="text" name="department" value="{{ classroom.department or '' }}"></div>
+        </div>
+        <div class="form-group"><label><i data-lucide="calendar" style="width:14px;height:14px"></i> Academic Year</label><input type="text" name="academic_year" value="{{ classroom.academic_year or '' }}"></div>
+        <button type="submit" class="btn btn-block" style="margin-top:8px"><i data-lucide="save" style="width:16px;height:16px"></i> Update Class</button>
+    </form>
+</div>
+{% endblock %}

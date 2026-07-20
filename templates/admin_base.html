@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin - ParaScan{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon"><i data-lucide="shield" style="width:20px;height:20px"></i></div>
+            <span class="brand-text">ParaScan</span>
+            <span class="brand-badge" style="background:var(--danger)">ADMIN</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="sidebar-section">Admin</div>
+            <a href="{{ url_for('admin_dashboard') }}" class="sidebar-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('admin_faculty_list') }}" class="sidebar-link {% if request.endpoint in ['admin_faculty_list','admin_faculty_add','admin_faculty_edit'] %}active{% endif %}">
+                <i data-lucide="users"></i>
+                <span>Faculty Management</span>
+            </a>
+            <a href="{{ url_for('admin_students') }}" class="sidebar-link {% if request.endpoint == 'admin_students' %}active{% endif %}">
+                <i data-lucide="graduation-cap"></i>
+                <span>All Students</span>
+            </a>
+            <a href="{{ url_for('admin_attendance') }}" class="sidebar-link {% if request.endpoint == 'admin_attendance' %}active{% endif %}">
+                <i data-lucide="clipboard-check"></i>
+                <span>All Attendance</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <button class="theme-toggle-sidebar" onclick="toggleTheme()" title="Toggle Theme">
+                <i data-lucide="moon" style="width:16px;height:16px"></i>
+                <span>Dark Mode</span>
+            </button>
+            <div class="sidebar-profile">
+                <div class="profile-avatar"><i data-lucide="shield" style="width:16px;height:16px"></i></div>
+                <div class="profile-info">
+                    <span class="profile-name">{{ current_user.name }}</span>
+                    <span class="profile-role">Administrator</span>
+                </div>
+            </div>
+            <a href="{{ url_for('admin_logout') }}" class="sidebar-logout" title="Logout">
+                <i data-lucide="log-out"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <div class="sidebar-overlay" onclick="closeSidebar()"></div>
+    <button class="sidebar-toggle" onclick="toggleSidebar()"><i data-lucide="menu" style="width:18px;height:18px"></i></button>
+
+
+
+    <main class="main-content">
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">
+                            <i data-lucide="{% if category == 'success' %}check-circle{% elif category == 'error' %}alert-circle{% else %}info{% endif %}" style="width:16px;height:16px"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

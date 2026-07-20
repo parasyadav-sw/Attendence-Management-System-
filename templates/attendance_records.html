@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Attendance Records - ParaScan{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div><h1>Attendance Records</h1><p>View and filter attendance history</p></div>
+</div>
+<div class="table-container">
+    <div style="padding:16px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div style="flex:1;min-width:160px"><label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px"><i data-lucide="book-open" style="width:12px;height:12px"></i> Class</label>
+            <select id="class-filter" onchange="applyFilters()" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit;background:var(--bg-input);color:var(--text)">
+                <option value="">All Classes</option>
+                {% for c in classes %}<option value="{{ c.id }}" {% if selected_class_id == c.id|string %}selected{% endif %}>{{ c.name }}{% if c.division %} - {{ c.division }}{% endif %}</option>{% endfor %}
+            </select>
+        </div>
+        <div style="flex:1;min-width:160px"><label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px"><i data-lucide="calendar" style="width:12px;height:12px"></i> Date</label>
+            <input type="date" id="date-picker" value="{{ selected_date.isoformat() }}" onchange="applyFilters()" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit;background:var(--bg-input);color:var(--text)">
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table>
+            <thead><tr><th>#</th><th>Student Name</th><th>Student ID</th><th>Time</th><th>Status</th></tr></thead>
+            <tbody>
+                {% if records %}{% for attendance, student in records %}
+                <tr><td>{{ loop.index }}</td><td><strong>{{ student.name }}</strong></td><td>{{ student.student_id }}</td><td>{{ attendance.time.strftime('%H:%M:%S') }}</td><td><span class="badge badge-success">{{ attendance.status }}</span></td></tr>
+                {% endfor %}{% else %}
+                <tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted)"><i data-lucide="clipboard" style="width:32px;height:32px;display:block;margin:0 auto 8px;opacity:.4"></i>No records found</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    {% if records %}<div style="padding:12px 16px;text-align:center;color:var(--text-secondary);font-size:12px;border-top:1px solid var(--border)"><i data-lucide="info" style="width:12px;height:12px"></i> Total: <strong>{{ records|length }}</strong> student(s)</div>{% endif %}
+</div>
+<script>function applyFilters(){const d=document.getElementById('date-picker').value,c=document.getElementById('class-filter').value;let u='/attendance-records?date='+d;if(c)u+='&class_id='+c;window.location.href=u}</script>
+{% endblock %}

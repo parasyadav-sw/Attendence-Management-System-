@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Classes - ParaScan{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div><h1>Classes</h1><p>Create and manage your classes</p></div>
+    <a href="{{ url_for('class_add') }}" class="btn"><i data-lucide="plus" style="width:16px;height:16px"></i> Add Class</a>
+</div>
+
+{% if classes %}
+<div class="class-grid">
+    {% for c in classes %}
+    <div class="class-card">
+        <div class="class-card-header">
+            <div>
+                <div class="class-card-title">{{ c.name }}{% if c.division %} - {{ c.division }}{% endif %}</div>
+                <div class="class-card-meta">
+                    {% if c.department %}<span><i data-lucide="building-2" style="width:12px;height:12px"></i> {{ c.department }}</span>{% endif %}
+                    {% if c.academic_year %}<span><i data-lucide="calendar" style="width:12px;height:12px"></i> {{ c.academic_year }}</span>{% endif %}
+                    <span><i data-lucide="users" style="width:12px;height:12px"></i> {{ c.students|length }} students</span>
+                </div>
+            </div>
+        </div>
+        <div class="class-card-actions">
+            <a href="{{ url_for('class_edit', class_id=c.id) }}" class="btn btn-secondary btn-sm" style="flex:1"><i data-lucide="pencil" style="width:14px;height:14px"></i> Edit</a>
+            <form method="POST" action="{{ url_for('class_delete', class_id=c.id) }}" style="flex:1" onsubmit="return confirm('Delete this class? Students will be unlinked.')">
+                <button type="submit" class="btn btn-danger btn-sm" style="width:100%"><i data-lucide="trash-2" style="width:14px;height:14px"></i> Delete</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state" style="background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border);padding:60px">
+    <i data-lucide="book-open" style="width:48px;height:48px;color:var(--accent)"></i>
+    <h3>No Classes Yet</h3>
+    <p>Create your first class to start organizing attendance</p>
+    <a href="{{ url_for('class_add') }}" class="btn"><i data-lucide="plus" style="width:16px;height:16px"></i> Create Class</a>
+</div>
+{% endif %}
+{% endblock %}

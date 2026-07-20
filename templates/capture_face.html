@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Capture Face - ParaScan{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div><h1>Capture Student Face</h1><p>Registering: {{ student.name }} ({{ student.student_id }})</p></div>
+    <a href="{{ url_for('register_student') }}" class="btn btn-secondary"><i data-lucide="arrow-left" style="width:16px;height:16px"></i> Back</a>
+</div>
+<div class="form-container">
+    <h2><i data-lucide="camera" style="width:18px;height:18px"></i> Face Registration</h2>
+    <div class="camera-container">
+        <video id="camera-video" autoplay playsinline></video>
+        <canvas id="capture-canvas"></canvas>
+        <div class="camera-controls">
+            <button id="capture-btn" class="btn" onclick="captureAndSave()"><i data-lucide="camera" style="width:16px;height:16px"></i> Capture Face</button>
+            <button id="retake-btn" class="btn btn-secondary" onclick="retakePhoto()" style="display:none"><i data-lucide="refresh-cw" style="width:16px;height:16px"></i> Retake</button>
+        </div>
+        <div id="detection-status" class="detection-status" style="display:none"></div>
+    </div>
+    <div id="preview-container" style="display:none;margin-top:16px;text-align:center">
+        <h3 style="font-size:14px;margin-bottom:8px">Captured Photo:</h3>
+        <img id="captured-photo" style="max-width:280px;border-radius:var(--radius-lg)">
+    </div>
+    <div style="margin-top:20px;text-align:center">
+        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:12px"><i data-lucide="info" style="width:14px;height:14px;vertical-align:middle"></i> Position your face in the center. Ensure good lighting.</p>
+        <a href="{{ url_for('register_student') }}" class="btn btn-secondary"><i data-lucide="arrow-left" style="width:16px;height:16px"></i> Back to Registration</a>
+    </div>
+</div>
+<script>
+    const studentId = {{ student.id }};
+    let capturedImageData = null;
+    function captureAndSave(){
+        const video=document.getElementById('camera-video');
+        const captureBtn=document.getElementById('capture-btn');
+        const retakeBtn=document.getElementById('retake-btn');
+        const previewContainer=document.getElementById('preview-container');
+        const capturedPhoto=document.getElementById('captured-photo');
+        const detectionStatus=document.getElementById('detection-status');
+        capturedImageData=captureFrame(video);
+        capturedPhoto.src=capturedImageData;
+        previewContainer.style.display='block';
+        captureBtn.innerHTML='<i data-lucide="loader" class="spinner"></i> Saving...';
+        captureBtn.disabled=true;
+        saveFace(studentId,capturedImageData).then(result=>{
+            if(result.success){
+                detectionStatus.textContent='✓ '+result.message;
+                detectionStatus.className='detection-status success';
+                detectionStatus.style.display='block';
+                captureBtn.innerHTML='<i data-lucide="check"></i> Saved';
+                retakeBtn.style.display='inline-flex';
+                if(typeof lucide!=='undefined')lucide.createIcons();
+                setTimeout(()=>{window.location.href='{{ url_for("dashboard") }}'},2000);
+            }else{
+                detectionStatus.textContent='✗ '+result.error;
+                detectionStatus.className='detection-status error';
+                detectionStatus.style.display='block';
+                captureBtn.innerHTML='<i data-lucide="camera"></i> Capture Face';
+                captureBtn.disabled=false;
+                if(typeof lucide!=='undefined')lucide.createIcons();
+            }
+        });
+    }
+    function retakePhoto(){
+        document.getElementById('preview-container').style.display='none';
+        document.getElementById('detection-status').style.display='none';
+        const btn=document.getElementById('capture-btn');
+        btn.innerHTML='<i data-lucide="camera"></i> Capture Face';
+        btn.disabled=false;
+        document.getElementById('retake-btn').style.display='none';
+        if(typeof lucide!=='undefined')lucide.createIcons();
+    }
+</script>
+{% endblock %}

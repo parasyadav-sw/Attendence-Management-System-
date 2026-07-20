@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParaScan - Face Recognition Attendance</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        body{display:flex;justify-content:center;align-items:center;min-height:100vh;background:var(--bg)}
+        .landing{text-align:center;padding:60px 48px;background:var(--bg-card);border-radius:var(--radius-xl);box-shadow:var(--shadow-xl);max-width:460px;width:90%;border:1px solid var(--border);animation:fadeIn .6s ease}
+        .landing-icon{width:80px;height:80px;background:linear-gradient(135deg,var(--accent),var(--accent-light));border-radius:20px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:24px;color:#fff;animation:pulse 2s ease-in-out infinite}
+        h1{font-size:32px;color:var(--text);margin-bottom:8px;font-weight:800;letter-spacing:-.5px}
+        .tagline{font-size:14px;color:var(--text-secondary);margin-bottom:32px;line-height:1.6}
+        .start-btn{display:inline-flex;align-items:center;gap:10px;padding:14px 48px;font-size:15px;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent-light));border:none;border-radius:50px;cursor:pointer;text-decoration:none;transition:var(--transition);box-shadow:0 4px 20px rgba(79,70,229,.3)}
+        .start-btn:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(79,70,229,.4)}
+        .landing-features{display:flex;justify-content:center;gap:32px;margin-top:40px;flex-wrap:wrap}
+        .landing-feature{text-align:center}
+        .landing-feature i{font-size:28px;color:var(--accent);margin-bottom:8px;display:block}
+        .landing-feature p{color:var(--text-secondary);font-size:12px;font-weight:500}
+    </style>
+</head>
+<body>
+    <div class="landing">
+        <div class="landing-icon"><i data-lucide="scan-face" style="width:36px;height:36px"></i></div>
+        <h1>ParaScan</h1>
+        <p class="tagline">Smart Attendance Management System Using Face Recognition</p>
+        <a href="{{ url_for('login') }}" class="start-btn">
+            <i data-lucide="play" style="width:16px;height:16px"></i> Get Started
+        </a>
+        <div class="landing-features">
+            <div class="landing-feature"><i data-lucide="camera"></i><p>Face Recognition</p></div>
+            <div class="landing-feature"><i data-lucide="zap"></i><p>Instant Marking</p></div>
+            <div class="landing-feature"><i data-lucide="shield-check"></i><p>Secure System</p></div>
+        </div>
+    </div>
+    <script>document.addEventListener('DOMContentLoaded',function(){if(typeof lucide!=='undefined')lucide.createIcons()})</script>
+</body>
+</html>

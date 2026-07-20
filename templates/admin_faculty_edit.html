@@ -1,0 +1,24 @@
+{% extends "admin_base.html" %}
+{% block title %}Edit Faculty - ParaScan{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div><h1>Edit Faculty</h1><p>Update faculty account information</p></div>
+    <a href="{{ url_for('admin_faculty_list') }}" class="btn btn-secondary"><i data-lucide="arrow-left" style="width:16px;height:16px"></i> Back</a>
+</div>
+<div class="form-container" style="max-width:640px">
+    <h2><i data-lucide="user-cog" style="width:18px;height:18px"></i> Edit: {{ faculty.name }}</h2>
+    <form method="POST" action="{{ url_for('admin_faculty_edit', faculty_id=faculty.id) }}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div class="form-group"><label><i data-lucide="user" style="width:14px;height:14px"></i> Name *</label><input type="text" name="name" required value="{{ faculty.name }}"></div>
+            <div class="form-group"><label><i data-lucide="credit-card" style="width:14px;height:14px"></i> Faculty ID *</label><input type="text" name="faculty_id" required value="{{ faculty.faculty_id }}"></div>
+            <div class="form-group"><label><i data-lucide="building-2" style="width:14px;height:14px"></i> Department</label><input type="text" name="department" value="{{ faculty.department or '' }}"></div>
+            <div class="form-group"><label><i data-lucide="mail" style="width:14px;height:14px"></i> Email</label><input type="email" name="email" value="{{ faculty.email or '' }}"></div>
+            <div class="form-group"><label><i data-lucide="phone" style="width:14px;height:14px"></i> Mobile</label><input type="text" name="mobile" value="{{ faculty.mobile or '' }}"></div>
+            <div class="form-group"><label><i data-lucide="at-sign" style="width:14px;height:14px"></i> Username *</label><input type="text" name="username" required value="{{ faculty.username }}"></div>
+            <div class="form-group"><label><i data-lucide="lock" style="width:14px;height:14px"></i> New Password</label><input type="password" name="password" placeholder="Leave blank to keep current"></div>
+            <div class="form-group" style="display:flex;align-items:end;padding-bottom:8px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" name="is_active" {% if faculty.is_active_account %}checked{% endif %} style="width:auto"><span>Account Active</span></label></div>
+        </div>
+        <button type="submit" class="btn btn-block" style="margin-top:8px"><i data-lucide="save" style="width:16px;height:16px"></i> Update Faculty</button>
+    </form>
+</div>
+{% endblock %}

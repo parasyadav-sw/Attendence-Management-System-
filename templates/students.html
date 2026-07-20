@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Registered Students - ParaScan{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div><h1>Registered Students</h1><p>View and manage all registered students</p></div>
+    <a href="{{ url_for('register_student') }}" class="btn"><i data-lucide="user-plus" style="width:16px;height:16px"></i> Add Student</a>
+</div>
+<div class="table-container">
+    <div style="padding:16px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <div style="flex:1;min-width:200px"><label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px"><i data-lucide="filter" style="width:12px;height:12px"></i> Filter by Class</label>
+            <select onchange="window.location.href='{{ url_for('students') }}?class_id='+this.value" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit;background:var(--bg-input);color:var(--text)">
+                <option value="">All Classes</option>
+                {% for c in classes %}<option value="{{ c.id }}" {% if selected_class_id == c.id|string %}selected{% endif %}>{{ c.name }}{% if c.division %} - {{ c.division }}{% endif %}</option>{% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table>
+            <thead><tr><th>#</th><th>Student Name</th><th>Student ID</th><th>Class</th><th>Division</th><th>Face</th><th>Registered</th><th>Capture</th><th>Edit</th><th>Delete</th></tr></thead>
+            <tbody>
+                {% if students %}{% for student in students %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td><strong>{{ student.name }}</strong></td>
+                    <td>{{ student.student_id }}</td>
+                    <td>{{ student.class_name }}</td>
+                    <td>{{ student.division or '-' }}</td>
+                    <td>{% if student.face_image %}<span class="badge badge-success"><i data-lucide="check" style="width:12px;height:12px"></i> Yes</span>{% else %}<span class="badge badge-danger"><i data-lucide="x" style="width:12px;height:12px"></i> No</span>{% endif %}</td>
+                    <td>{{ student.created_at.strftime('%b %d, %Y') }}</td>
+                    <td>{% if not student.face_image %}<a href="{{ url_for('capture_face', student_id=student.id) }}" class="btn btn-sm"><i data-lucide="camera" style="width:14px;height:14px"></i> Capture</a>{% else %}<span style="color:var(--text-muted);font-size:12px">Done</span>{% endif %}</td>
+                    <td><a href="{{ url_for('student_edit', student_id=student.id) }}" class="btn btn-secondary btn-sm"><i data-lucide="pencil" style="width:14px;height:14px"></i> Edit</a></td>
+                    <td><form method="POST" action="{{ url_for('student_delete', student_id=student.id) }}" onsubmit="return confirm('Delete {{ student.name }}? This will also remove their face data and attendance records permanently.')"><button type="submit" class="btn btn-danger btn-sm"><i data-lucide="trash-2" style="width:14px;height:14px"></i> Delete</button></form></td>
+                </tr>
+                {% endfor %}{% else %}
+                <tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted)"><i data-lucide="users" style="width:32px;height:32px;display:block;margin:0 auto 8px;opacity:.4"></i>No students registered yet</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    {% if students %}<div style="padding:12px 16px;text-align:center;color:var(--text-secondary);font-size:12px;border-top:1px solid var(--border)">Total: <strong>{{ students|length }}</strong> student(s)</div>{% endif %}
+</div>
+{% endblock %}

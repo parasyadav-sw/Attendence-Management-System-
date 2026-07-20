@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Register Student - ParaScan{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div><h1>Register New Student</h1><p>Add student information and capture facial data</p></div>
+    <a href="{{ url_for('students') }}" class="btn btn-secondary"><i data-lucide="arrow-left" style="width:16px;height:16px"></i> Back</a>
+</div>
+<div class="form-container">
+    <h2><i data-lucide="user-plus" style="width:18px;height:18px"></i> Student Information</h2>
+    <form method="POST" action="{{ url_for('register_student') }}">
+        <div class="form-group"><label><i data-lucide="book-open" style="width:14px;height:14px"></i> Select Class *</label>
+            <select name="classroom_id" id="classroom_id" required onchange="autoFillClass(this)">
+                <option value="">-- Choose a Class --</option>
+                {% for c in classes %}<option value="{{ c.id }}" data-name="{{ c.name }}" data-division="{{ c.division or '' }}">{{ c.name }}{% if c.division %} - {{ c.division }}{% endif %}{% if c.department %} ({{ c.department }}){% endif %}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="form-group"><label><i data-lucide="user" style="width:14px;height:14px"></i> Student Name *</label><input type="text" name="name" required placeholder="Enter student's full name"></div>
+        <div class="form-group"><label><i data-lucide="credit-card" style="width:14px;height:14px"></i> Student ID / Roll Number *</label><input type="text" name="student_id" required placeholder="Enter student ID"></div>
+        <input type="hidden" name="class_name" id="class_name_hidden">
+        <input type="hidden" name="division" id="division_hidden">
+        <div id="class-info" style="display:none;padding:12px 16px;background:var(--bg-secondary);border-radius:var(--radius);margin-bottom:18px;font-size:13px;color:var(--text-secondary)">
+            <i data-lucide="info" style="width:14px;height:14px;vertical-align:middle;color:var(--accent)"></i>
+            Class: <strong id="class-info-text"></strong>
+        </div>
+        <button type="submit" class="btn btn-block" style="margin-top:8px"><i data-lucide="arrow-right" style="width:16px;height:16px"></i> Continue to Face Capture</button>
+    </form>
+</div>
+<script>
+function autoFillClass(sel){
+    const opt=sel.options[sel.selectedIndex];
+    if(opt.value){
+        document.getElementById('class_name_hidden').value=opt.getAttribute('data-name');
+        document.getElementById('division_hidden').value=opt.getAttribute('data-division');
+        document.getElementById('class-info-text').textContent=opt.text;
+        document.getElementById('class-info').style.display='block';
+    }else{
+        document.getElementById('class_name_hidden').value='';
+        document.getElementById('division_hidden').value='';
+        document.getElementById('class-info').style.display='none';
+    }
+}
+</script>
+{% endblock %}

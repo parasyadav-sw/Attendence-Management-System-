@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - ParaScan{% endblock %}
+{% block content %}
+<div class="welcome-banner">
+    <h1>Welcome back, {{ current_user.name }}!</h1>
+    <p>Here's what's happening with your classes today.</p>
+    <div class="banner-meta">
+        <div class="banner-tag"><i data-lucide="calendar" style="width:14px;height:14px"></i> {{ current_date }}</div>
+        <div class="banner-tag"><i data-lucide="clock" style="width:14px;height:14px"></i> {{ current_time }}</div>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card teal">
+        <div class="stat-icon"><i data-lucide="book-open" style="width:20px;height:20px"></i></div>
+        <span class="stat-number">{{ classes|length }}</span>
+        <span class="stat-label">Total Classes</span>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon"><i data-lucide="users" style="width:20px;height:20px"></i></div>
+        <span class="stat-number">{{ total_students }}</span>
+        <span class="stat-label">Total Students</span>
+    </div>
+    <div class="stat-card purple">
+        <div class="stat-icon"><i data-lucide="user-check" style="width:20px;height:20px"></i></div>
+        <span class="stat-number">{{ today_attendance }}</span>
+        <span class="stat-label">Present Today</span>
+    </div>
+    <div class="stat-card orange">
+        <div class="stat-icon"><i data-lucide="user-x" style="width:20px;height:20px"></i></div>
+        <span class="stat-number">{{ absent_students }}</span>
+        <span class="stat-label">Absent Today</span>
+    </div>
+</div>
+
+<div class="section-header"><h2><i data-lucide="zap" style="width:16px;height:16px"></i> Quick Actions</h2></div>
+<div class="feature-grid">
+    <a href="{{ url_for('class_list') }}" class="feature-card">
+        <div class="feature-icon-wrap purple"><i data-lucide="book-open" style="width:20px;height:20px"></i></div>
+        <div class="feature-content"><h3>Manage Classes</h3><p>Create and organize your classes</p></div>
+        <div class="feature-arrow"><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
+    </a>
+    <a href="{{ url_for('register_student') }}" class="feature-card">
+        <div class="feature-icon-wrap green"><i data-lucide="user-plus" style="width:20px;height:20px"></i></div>
+        <div class="feature-content"><h3>Register Student</h3><p>Add students and capture facial data</p></div>
+        <div class="feature-arrow"><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
+    </a>
+    <a href="{{ url_for('attendance') }}" class="feature-card">
+        <div class="feature-icon-wrap orange"><i data-lucide="camera" style="width:20px;height:20px"></i></div>
+        <div class="feature-content"><h3>Take Attendance</h3><p>Select class and mark attendance via face recognition</p></div>
+        <div class="feature-arrow"><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
+    </a>
+    <a href="{{ url_for('attendance_records') }}" class="feature-card">
+        <div class="feature-icon-wrap blue"><i data-lucide="clipboard-list" style="width:20px;height:20px"></i></div>
+        <div class="feature-content"><h3>Attendance Records</h3><p>View and filter attendance history</p></div>
+        <div class="feature-arrow"><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
+    </a>
+    <a href="{{ url_for('students') }}" class="feature-card">
+        <div class="feature-icon-wrap red"><i data-lucide="users" style="width:20px;height:20px"></i></div>
+        <div class="feature-content"><h3>Manage Students</h3><p>View and manage registered students</p></div>
+        <div class="feature-arrow"><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
+    </a>
+</div>
+
+<div class="bottom-grid">
+    <div class="activity-section">
+        <div class="section-header"><h2><i data-lucide="history" style="width:16px;height:16px"></i> Recent Activity</h2></div>
+        <div class="activity-list">
+            {% if recent_attendance %}
+                {% for attendance, student in recent_attendance %}
+                <div class="activity-item">
+                    <div class="activity-icon present"><i data-lucide="user-check" style="width:14px;height:14px"></i></div>
+                    <div class="activity-info">
+                        <span class="activity-title">{{ student.name }} marked present</span>
+                        <span class="activity-time">{{ attendance.date.strftime('%b %d') }} at {{ attendance.time.strftime('%H:%M') }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% elif recent_students %}
+                {% for student in recent_students %}
+                <div class="activity-item">
+                    <div class="activity-icon register"><i data-lucide="user-plus" style="width:14px;height:14px"></i></div>
+                    <div class="activity-info">
+                        <span class="activity-title">{{ student.name }} registered</span>
+                        <span class="activity-time">{{ student.created_at.strftime('%b %d, %Y') }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="activity-empty"><i data-lucide="inbox" style="width:28px;height:28px"></i><p>No recent activity yet</p></div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="info-section">
+        <div class="section-header"><h2><i data-lucide="info" style="width:16px;height:16px"></i> Overview</h2></div>
+        <div class="info-list">
+            <div class="info-item"><span class="info-label">Total Classes</span><span class="info-value">{{ classes|length }}</span></div>
+            <div class="info-item"><span class="info-label">Registered Students</span><span class="info-value">{{ total_students }}</span></div>
+            <div class="info-item"><span class="info-label">Attendance Today</span><span class="info-value">{{ today_attendance }}</span></div>
+            <div class="info-item"><span class="info-label">Attendance Rate</span><span class="info-value">{% if total_students > 0 %}{{ ((today_attendance / total_students) * 100)|int }}%{% else %}0%{% endif %}</span></div>
+        </div>
+    </div>
+</div>
+{% endblock %}

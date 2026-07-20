@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+instance/
+*.db
+*.log
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

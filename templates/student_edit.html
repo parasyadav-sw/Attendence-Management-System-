@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Edit Student - ParaScan{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div><h1>Edit Student</h1><p>Update information for {{ student.name }}</p></div>
+    <a href="{{ url_for('students') }}" class="btn btn-secondary"><i data-lucide="arrow-left" style="width:16px;height:16px"></i> Back</a>
+</div>
+<div class="form-container">
+    <h2><i data-lucide="user-cog" style="width:18px;height:18px"></i> Student Information</h2>
+    <form method="POST" action="{{ url_for('student_edit', student_id=student.id) }}">
+        <div class="form-group"><label><i data-lucide="book-open" style="width:14px;height:14px"></i> Class *</label>
+            <select name="classroom_id" id="classroom_id" required onchange="autoFillClass(this)">
+                <option value="">-- Choose a Class --</option>
+                {% for c in classes %}<option value="{{ c.id }}" data-name="{{ c.name }}" data-division="{{ c.division or '' }}" {% if student.classroom_id == c.id %}selected{% endif %}>{{ c.name }}{% if c.division %} - {{ c.division }}{% endif %}{% if c.department %} ({{ c.department }}){% endif %}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="form-group"><label><i data-lucide="user" style="width:14px;height:14px"></i> Student Name *</label><input type="text" name="name" value="{{ student.name }}" required placeholder="Enter student's full name"></div>
+        <div class="form-group"><label><i data-lucide="credit-card" style="width:14px;height:14px"></i> Student ID / Roll Number *</label><input type="text" name="student_id" value="{{ student.student_id }}" required placeholder="Enter student ID"></div>
+        <input type="hidden" name="class_name" id="class_name_hidden" value="{{ student.class_name }}">
+        <input type="hidden" name="division" id="division_hidden" value="{{ student.division or '' }}">
+        <div id="class-info" style="padding:12px 16px;background:var(--bg-secondary);border-radius:var(--radius);margin-bottom:18px;font-size:13px;color:var(--text-secondary)">
+            <i data-lucide="info" style="width:14px;height:14px;vertical-align:middle;color:var(--accent)"></i>
+            Class: <strong id="class-info-text">{{ student.class_name }}{% if student.division %} - {{ student.division }}{% endif %}</strong>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+            <a href="{{ url_for('students') }}" class="btn btn-secondary" style="flex:1"><i data-lucide="x" style="width:16px;height:16px"></i> Cancel</a>
+            <button type="submit" class="btn btn-success" style="flex:1"><i data-lucide="save" style="width:16px;height:16px"></i> Save Changes</button>
+        </div>
+    </form>
+</div>
+<script>
+function autoFillClass(sel){
+    const opt=sel.options[sel.selectedIndex];
+    if(opt.value){
+        document.getElementById('class_name_hidden').value=opt.getAttribute('data-name');
+        document.getElementById('division_hidden').value=opt.getAttribute('data-division');
+        document.getElementById('class-info-text').textContent=opt.text;
+    }else{
+        document.getElementById('class_name_hidden').value='';
+        document.getElementById('division_hidden').value='';
+        document.getElementById('class-info-text').textContent='';
+    }
+}
+</script>
+{% endblock %}

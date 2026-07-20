@@ -1,0 +1,59 @@
+{% extends "admin_base.html" %}
+{% block title %}Admin Dashboard - ParaScan{% endblock %}
+{% block content %}
+<div class="welcome-banner" style="background:linear-gradient(135deg,#0F172A 0%,#1E293B 50%,#475569 100%)">
+    <h1>Admin Dashboard</h1>
+    <p>Manage your institution's attendance system</p>
+    <div class="banner-meta">
+        <div class="banner-tag"><i data-lucide="calendar" style="width:14px;height:14px"></i> {{ current_date }}</div>
+        <div class="banner-tag"><i data-lucide="clock" style="width:14px;height:14px"></i> {{ current_time }}</div>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card teal">
+        <div class="stat-icon"><i data-lucide="users" style="width:20px;height:20px"></i></div>
+        <span class="stat-number">{{ total_faculty }}</span>
+        <span class="stat-label">Total Faculty</span>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon"><i data-lucide="book-open" style="width:20px;height:20px"></i></div>
+        <span class="stat-number">{{ total_classes }}</span>
+        <span class="stat-label">Total Classes</span>
+    </div>
+    <div class="stat-card purple">
+        <div class="stat-icon"><i data-lucide="graduation-cap" style="width:20px;height:20px"></i></div>
+        <span class="stat-number">{{ total_students }}</span>
+        <span class="stat-label">Total Students</span>
+    </div>
+    <div class="stat-card orange">
+        <div class="stat-icon"><i data-lucide="clipboard-check" style="width:20px;height:20px"></i></div>
+        <span class="stat-number">{{ today_attendance }}</span>
+        <span class="stat-label">Today's Attendance</span>
+    </div>
+</div>
+
+<div class="section-header"><h2><i data-lucide="zap" style="width:16px;height:16px"></i> Quick Actions</h2></div>
+<div class="feature-grid">
+    <a href="{{ url_for('admin_faculty_add') }}" class="feature-card">
+        <div class="feature-icon-wrap purple"><i data-lucide="user-plus" style="width:20px;height:20px"></i></div>
+        <div class="feature-content"><h3>Add Faculty</h3><p>Create new faculty accounts</p></div>
+        <div class="feature-arrow"><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
+    </a>
+    <a href="{{ url_for('admin_faculty_list') }}" class="feature-card">
+        <div class="feature-icon-wrap green"><i data-lucide="users" style="width:20px;height:20px"></i></div>
+        <div class="feature-content"><h3>Manage Faculty</h3><p>View and manage accounts</p></div>
+        <div class="feature-arrow"><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
+    </a>
+    <a href="{{ url_for('admin_students') }}" class="feature-card">
+        <div class="feature-icon-wrap orange"><i data-lucide="graduation-cap" style="width:20px;height:20px"></i></div>
+        <div class="feature-content"><h3>All Students</h3><p>View all registered students</p></div>
+        <div class="feature-arrow"><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
+    </a>
+    <a href="{{ url_for('admin_attendance') }}" class="feature-card">
+        <div class="feature-icon-wrap red"><i data-lucide="clipboard-check" style="width:20px;height:20px"></i></div>
+        <div class="feature-content"><h3>All Attendance</h3><p>View attendance with filters</p></div>
+        <div class="feature-arrow"><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
+    </a>
+</div>
+{% endblock %}

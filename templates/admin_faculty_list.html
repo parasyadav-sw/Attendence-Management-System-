@@ -1,0 +1,39 @@
+{% extends "admin_base.html" %}
+{% block title %}Faculty Management - ParaScan{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div><h1>Faculty Management</h1><p>Manage all faculty accounts</p></div>
+    <a href="{{ url_for('admin_faculty_add') }}" class="btn"><i data-lucide="user-plus" style="width:16px;height:16px"></i> Add Faculty</a>
+</div>
+<div class="table-container">
+    <div class="table-responsive">
+        <table>
+            <thead><tr><th>#</th><th>Name</th><th>Faculty ID</th><th>Department</th><th>Email</th><th>Mobile</th><th>Username</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% if faculty_list %}{% for f in faculty_list %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td><strong>{{ f.name }}</strong></td>
+                    <td>{{ f.faculty_id }}</td>
+                    <td>{{ f.department or '-' }}</td>
+                    <td>{{ f.email or '-' }}</td>
+                    <td>{{ f.mobile or '-' }}</td>
+                    <td>{{ f.username }}</td>
+                    <td>{% if f.is_active_account %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-danger">Inactive</span>{% endif %}</td>
+                    <td>
+                        <div style="display:flex;gap:4px;flex-wrap:wrap">
+                            <a href="{{ url_for('admin_faculty_edit', faculty_id=f.id) }}" class="btn btn-secondary btn-sm"><i data-lucide="pencil" style="width:12px;height:12px"></i></a>
+                            <form method="POST" action="{{ url_for('admin_faculty_toggle', faculty_id=f.id) }}" style="display:inline"><button type="submit" class="btn {% if f.is_active_account %}btn-danger{% else %}btn-success{% endif %} btn-sm"><i data-lucide="{% if f.is_active_account %}ban{% else %}check{% endif %}" style="width:12px;height:12px"></i></button></form>
+                            <form method="POST" action="{{ url_for('admin_faculty_delete', faculty_id=f.id) }}" style="display:inline" onsubmit="return confirm('Delete this faculty?')"><button type="submit" class="btn btn-danger btn-sm"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button></form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}{% else %}
+                <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted)"><i data-lucide="users" style="width:32px;height:32px;display:block;margin:0 auto 8px;opacity:.4"></i>No faculty registered yet</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    {% if faculty_list %}<div style="padding:12px 16px;text-align:center;color:var(--text-secondary);font-size:12px;border-top:1px solid var(--border)">Total: <strong>{{ faculty_list|length }}</strong> faculty</div>{% endif %}
+</div>
+{% endblock %}
