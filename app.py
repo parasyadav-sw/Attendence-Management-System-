@@ -6,6 +6,7 @@ import json
 import logging
 from datetime import datetime
 from functools import wraps
+from zoneinfo import ZoneInfo
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Response, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -13,6 +14,11 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('ParaScan')
 from werkzeug.security import generate_password_hash, check_password_hash
+
+APP_TIMEZONE = os.environ.get('TIMEZONE', 'Asia/Kolkata')
+
+def get_local_now():
+    return datetime.now(ZoneInfo(APP_TIMEZONE))
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'attendance-system-secret-key-2024'
@@ -224,7 +230,7 @@ def dashboard():
     faculty_id = current_user.id
     classes = Classroom.query.filter_by(faculty_id=faculty_id).all()
     total_students = Student.query.filter_by(faculty_id=faculty_id).count()
-    today = datetime.now().date()
+    today = get_local_now().date()
     today_attendance = db.session.query(Attendance).join(Student).filter(
         Student.faculty_id == faculty_id, Attendance.date == today
     ).count()
@@ -242,8 +248,8 @@ def dashboard():
                            recent_students=recent_students,
                            recent_attendance=recent_attendance,
                            classes=classes,
-                           current_date=datetime.now().strftime('%A, %B %d, %Y'),
-                           current_time=datetime.now().strftime('%I:%M %p'))
+                           current_date=get_local_now().strftime('%A, %B %d, %Y'),
+                           current_time=get_local_now().strftime('%I:%M %p'))
 
 
 # ==================== CLASS MANAGEMENT ====================
@@ -521,8 +527,8 @@ def video_feed():
                 student, score = match_student(face_roi)
                 name = student.name if student else "Unknown"
                 if student:
-                    today = datetime.now().date()
-                    now = datetime.now().time()
+                    today = get_local_now().date()
+                    now = get_local_now().time()
                     existing = Attendance.query.filter_by(student_id=student.id, date=today).first()
                     if not existing:
                         att = Attendance(student_id=student.id, date=today, time=now, status='Present', faculty_id=student.faculty_id, classroom_id=student.classroom_id)
@@ -541,7 +547,7 @@ def video_feed():
 @app.route('/attendance-records')
 @faculty_required
 def attendance_records():
-    date = request.args.get('date', datetime.now().date().isoformat())
+    date = request.args.get('date', get_local_now().date().isoformat())
     class_id = request.args.get('class_id', '')
     selected_date = datetime.strptime(date, '%Y-%m-%d').date()
     query = db.session.query(Attendance, Student).join(Student).filter(
@@ -557,7 +563,7 @@ def attendance_records():
 @app.route('/get-attendance-data')
 @faculty_required
 def get_attendance_data():
-    date = request.args.get('date', datetime.now().date().isoformat())
+    date = request.args.get('date', get_local_now().date().isoformat())
     classroom_id = request.args.get('classroom_id', '')
     selected_date = datetime.strptime(date, '%Y-%m-%d').date()
     query = db.session.query(Attendance, Student).join(Student).filter(
@@ -580,8 +586,8 @@ def mark_attendance():
     student = Student.query.get(int(student_id))
     if not student or student.faculty_id != current_user.id:
         return jsonify({'error': 'Student not found'}), 404
-    today = datetime.now().date()
-    now = datetime.now().time()
+    today = get_local_now().date()
+    now = get_local_now().time()
     existing = Attendance.query.filter_by(student_id=student.id, date=today).first()
     if existing:
         return jsonify({'message': 'Attendance already marked', 'student_name': student.name})
@@ -633,8 +639,8 @@ def detect_face():
             if student.faculty_id != current_user.id:
                 logger.warning(f"detect_face: faculty_id mismatch for {student.name}")
                 return jsonify({'success': False, 'message': 'Student not registered', 'faces': face_boxes})
-            today = datetime.now().date()
-            now = datetime.now().time()
+            today = get_local_now().date()
+            now = get_local_now().time()
             existing = Attendance.query.filter_by(student_id=student.id, date=today).first()
             if existing:
                 logger.info(f"detect_face: already marked for {student.name}")
@@ -719,8 +725,8 @@ def detect_face_batch():
         reason = 'score_below_threshold' if best_score >= 0 else 'no_match'
         logger.info(f"[BATCH] FAILED: reason={reason}, best_score={best_score:.4f}")
         return jsonify({'success': False, 'message': 'Student not registered', 'faces': faces_out, 'score': round(max(best_score, 0), 4), 'debug': {'framesReceived': len(images), 'facesFound': len(all_face_histograms), 'threshold': 0.55, 'bestScore': round(max(best_score, 0), 4), 'scores': scores, 'reason': reason}})
-    today = datetime.now().date()
-    now = datetime.now().time()
+    today = get_local_now().date()
+    now = get_local_now().time()
     existing = Attendance.query.filter_by(student_id=best_student.id, date=today).first()
     if existing:
         logger.info(f"[BATCH] {best_student.name} already marked at {existing.time}")
@@ -767,7 +773,7 @@ def admin_dashboard():
     total_faculty = Faculty.query.count()
     total_students = Student.query.count()
     total_classes = Classroom.query.count()
-    today = datetime.now().date()
+    today = get_local_now().date()
     today_attendance = Attendance.query.filter_by(date=today).count()
     total_attendance = Attendance.query.count()
     return render_template('admin_dashboard.html',
@@ -776,8 +782,8 @@ def admin_dashboard():
                            total_classes=total_classes,
                            today_attendance=today_attendance,
                            total_attendance=total_attendance,
-                           current_date=datetime.now().strftime('%A, %B %d, %Y'),
-                           current_time=datetime.now().strftime('%I:%M %p'))
+                           current_date=get_local_now().strftime('%A, %B %d, %Y'),
+                           current_time=get_local_now().strftime('%I:%M %p'))
 
 
 @app.route('/admin/faculty')
@@ -884,7 +890,7 @@ def admin_students():
 @app.route('/admin/attendance')
 @admin_required
 def admin_attendance():
-    date = request.args.get('date', datetime.now().date().isoformat())
+    date = request.args.get('date', get_local_now().date().isoformat())
     faculty_filter = request.args.get('faculty_id', '')
     class_filter = request.args.get('class_id', '')
     selected_date = datetime.strptime(date, '%Y-%m-%d').date()

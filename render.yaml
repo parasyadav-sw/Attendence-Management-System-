@@ -12,6 +12,8 @@ services:
         fromDatabase:
           type: postgres
           name: attendance-db
+      - key: TIMEZONE
+        value: "Asia/Kolkata"
 
 databases:
   - name: attendance-db
