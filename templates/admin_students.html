@@ -3,18 +3,98 @@
 {% block content %}
 <div class="page-header"><div><h1>All Registered Students</h1><p>Students registered by all faculty members</p></div></div>
 <div class="table-container">
+    {% if classes|length > 0 %}
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
+        <span style="font-weight:600;font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;">Filter by Class:</span>
+        <div id="class-filters" style="display:flex;flex-wrap:wrap;gap:8px;">
+            <button onclick="filterStudents('all')" class="filter-btn active" data-class="all">All</button>
+            {% for cls in classes %}
+            <button onclick="filterStudents('{{ cls }}')" class="filter-btn" data-class="{{ cls }}">{{ cls }}</button>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
     <div class="table-responsive">
-        <table>
+        <table id="students-table">
             <thead><tr><th>#</th><th>Name</th><th>Student ID</th><th>Class</th><th>Division</th><th>Faculty</th><th>Face</th><th>Date</th></tr></thead>
             <tbody>
                 {% if student_list %}{% for student, faculty in student_list %}
-                <tr><td>{{ loop.index }}</td><td><strong>{{ student.name }}</strong></td><td>{{ student.student_id }}</td><td>{{ student.class_name }}</td><td>{{ student.division or '-' }}</td><td>{{ faculty.name }}</td><td>{% if student.face_image %}<span class="badge badge-success"><i data-lucide="check" style="width:12px;height:12px"></i> Yes</span>{% else %}<span class="badge badge-danger"><i data-lucide="x" style="width:12px;height:12px"></i> No</span>{% endif %}</td><td>{{ student.created_at.strftime('%b %d, %Y') }}</td></tr>
+                <tr data-class="{{ student.class_name }}">
+                    <td>{{ loop.index }}</td>
+                    <td><strong>{{ student.name }}</strong></td>
+                    <td>{{ student.student_id }}</td>
+                    <td>{{ student.class_name }}</td>
+                    <td>{{ student.division or '-' }}</td>
+                    <td>{{ faculty.name }}</td>
+                    <td>{% if student.face_image %}<span class="badge badge-success"><i data-lucide="check" style="width:12px;height:12px"></i> Yes</span>{% else %}<span class="badge badge-danger"><i data-lucide="x" style="width:12px;height:12px"></i> No</span>{% endif %}</td>
+                    <td>{{ student.created_at.strftime('%b %d, %Y') }}</td>
+                </tr>
                 {% endfor %}{% else %}
                 <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted)"><i data-lucide="graduation-cap" style="width:32px;height:32px;display:block;margin:0 auto 8px;opacity:.4"></i>No students registered yet</td></tr>
                 {% endif %}
             </tbody>
         </table>
     </div>
-    {% if student_list %}<div style="padding:12px 16px;text-align:center;color:var(--text-secondary);font-size:12px;border-top:1px solid var(--border)">Total: <strong>{{ student_list|length }}</strong> student(s)</div>{% endif %}
+    {% if student_list %}<div id="student-count" style="padding:12px 16px;text-align:center;color:var(--text-secondary);font-size:12px;border-top:1px solid var(--border)">Total: <strong id="count-number">{{ student_list|length }}</strong> student(s)</div>{% endif %}
 </div>
+<style>
+    .filter-btn {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: var(--transition);
+    }
+    .filter-btn:hover {
+        background: var(--bg-secondary);
+        color: var(--text);
+    }
+    .filter-btn.active {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+    }
+    @media (max-width: 640px) {
+        #class-filters {
+            width: 100%;
+        }
+        .filter-btn {
+            flex: 1 1 auto;
+            min-width: calc(50% - 4px);
+        }
+    }
+</style>
+{% endblock %}
+{% block scripts %}
+<script>
+    function filterStudents(className) {
+        const rows = document.querySelectorAll('#students-table tbody tr[data-class]');
+        let count = 0;
+        
+        rows.forEach(row => {
+            if (className === 'all' || row.getAttribute('data-class') === className) {
+                row.style.display = '';
+                count++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-class') === className);
+        });
+
+        const countEl = document.getElementById('count-number');
+        if (countEl) countEl.textContent = count;
+
+        const emptyRow = document.querySelector('#students-table tbody tr td[colspan]');
+        if (emptyRow) {
+            emptyRow.parentElement.style.display = (className === 'all' && count === 0) ? '' : 'none';
+        }
+    }
+</script>
 {% endblock %}

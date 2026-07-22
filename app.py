@@ -884,7 +884,8 @@ def admin_faculty_toggle(faculty_id):
 @admin_required
 def admin_students():
     all_students = db.session.query(Student, Faculty).join(Faculty, Student.faculty_id == Faculty.id).order_by(Student.created_at.desc()).all()
-    return render_template('admin_students.html', student_list=all_students)
+    classes = sorted(list(set(student.class_name for student, faculty in all_students)))
+    return render_template('admin_students.html', student_list=all_students, classes=classes)
 
 
 @app.route('/admin/attendance')
